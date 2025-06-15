@@ -1,0 +1,7 @@
+.git
+bin/
+*.exe
+*.out
+*.test
+*.log
+*.swp
