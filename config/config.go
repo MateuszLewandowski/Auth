@@ -1,8 +1,11 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -37,9 +40,20 @@ type ServerConfig struct {
 	Port string
 }
 
-func LoadConfig() *Config {
-	redisDB, _ := strconv.Atoi(os.Getenv("REDIS_DB"))
-	jwtExp, _ := strconv.Atoi(os.Getenv("JWT_EXPIRATION_MINUTES"))
+func LoadConfig(envFile string) *Config {
+	if err := godotenv.Load(envFile); err != nil {
+		log.Fatalf("Error loading environment file %s: %v", envFile, err)
+	}
+
+	redisDB, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+	if err != nil {
+		log.Fatalf("Invalid REDIS_DB value: %v", err)
+	}
+
+	jwtExp, err := strconv.Atoi(os.Getenv("JWT_EXPIRATION_MINUTES"))
+	if err != nil {
+		log.Fatalf("Invalid JWT_EXPIRATION_MINUTES value: %v", err)
+	}
 
 	return &Config{
 		Database: DatabaseConfig{

@@ -10,12 +10,15 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+type UserGormRepository struct {
+	db *gorm.DB
+}
 
-func InitializeDatabase(cfg *config.Config) {
+func InitializeDatabase(cfg *config.Config) *UserGormRepository {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.DbName)
 
+	fmt.Println(dsn)
 	fmt.Println("Connecting to database with DSN:", dsn)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -28,5 +31,17 @@ func InitializeDatabase(cfg *config.Config) {
 		log.Fatalf("failed migration: %v", err)
 	}
 
-	DB = db
+	return &UserGormRepository{db: db}
+}
+
+func (r *UserGormRepository) Create(user *model.User) error {
+	return r.db.Create(user).Error
+}
+
+func (r *UserGormRepository) FindUserByUsername(username string) (*model.User, error) {
+	var user model.User
+	if err := r.db.Where("username = ?", username).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

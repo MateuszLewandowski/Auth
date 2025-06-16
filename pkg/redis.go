@@ -14,9 +14,11 @@ var (
 	ctx         = context.Background()
 )
 
-var Redis *redis.Client
+type RedisRepository struct {
+	client *redis.Client
+}
 
-func InitializeRedis(cfg *config.Config) {
+func InitializeRedis(cfg *config.Config) *RedisRepository {
 	RedisClient = redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.Addr,
 		Password: cfg.Redis.Password,
@@ -28,7 +30,7 @@ func InitializeRedis(cfg *config.Config) {
 		helper.ThrowError(err)
 	}
 
-	Redis = RedisClient
+	return &RedisRepository{client: RedisClient}
 }
 
 func Set(key string, value any, expiration time.Duration) error {

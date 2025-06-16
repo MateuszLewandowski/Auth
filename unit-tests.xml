@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="14" failures="0" errors="0" time="0.000286">
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/cmd" timestamp="2025-06-16T17:57:22+02:00">
+		<properties>
+			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/config" timestamp="2025-06-16T17:57:22+02:00">
+		<properties>
+			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/helper" timestamp="2025-06-16T17:57:22+02:00">
+		<properties>
+			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="14" failures="0" time="0.000000" name="Auth/internal/handler/auth" timestamp="2025-06-16T17:57:22+02:00">
+		<properties>
+			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
+		</properties>
+		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_MissingAuthorizationHeader" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_InvalidTokenFormat" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_InvalidSignature" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_ExpiredToken" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_NotBeforeInFuture" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_MissingUsernameClaim" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_ValidToken" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_Success" time="0.140000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_InvalidJSON" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_UserNotFound" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_WrongPassword" time="0.130000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_Success" time="0.060000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_InvalidJSON" time="0.000000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_RepoUserExistsError" time="0.060000"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/internal/model" timestamp="2025-06-16T17:57:22+02:00">
+		<properties>
+			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/internal/server" timestamp="2025-06-16T17:57:22+02:00">
+		<properties>
+			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/pkg" timestamp="2025-06-16T17:57:22+02:00">
+		<properties>
+			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
+		</properties>
+	</testsuite>
+</testsuites>
