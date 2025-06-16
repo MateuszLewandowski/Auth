@@ -4,10 +4,11 @@ import (
 	"Auth/config"
 	"Auth/internal/server"
 	"Auth/pkg"
+	"os"
 )
 
 func main() {
-	cfg := config.LoadConfig(".env.dev")
+	cfg := config.LoadConfig(os.Getenv("ENV_FILE"))
 
 	db := pkg.InitializeDatabase(cfg)
 	redis := pkg.InitializeRedis(cfg)

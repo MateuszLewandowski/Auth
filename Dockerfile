@@ -13,5 +13,6 @@ FROM gcr.io/distroless/static-debian11
 
 WORKDIR /app
 COPY --from=builder ./app/auth ./app/auth
+COPY --from=builder /app/.env.prod /app/.env.prod
 
 ENTRYPOINT ["./app/auth"]

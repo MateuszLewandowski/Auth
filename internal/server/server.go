@@ -9,6 +9,10 @@ import (
 )
 
 func StartServer(db *pkg.UserGormRepository, redis *pkg.RedisRepository, cfg *config.Config) *gin.Engine {
+	if cfg.Env == "prod" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.Default()
 
 	router.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
