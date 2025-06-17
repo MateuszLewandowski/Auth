@@ -5,6 +5,7 @@ import (
 	"Auth/internal/handler/auth"
 	"Auth/internal/model"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -26,7 +27,7 @@ func (m *MockUserRepository) Create(user *model.User) error {
 	panic("unimplemented")
 }
 
-func (m *MockUserRepository) FindUserByUsername(username string) (*model.User, error) {
+func (m *MockUserRepository) FindUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	if m.Error != nil {
 		return nil, m.Error
 	}

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"Auth/config"
+	"context"
 	"net/http"
 	"time"
 
@@ -18,7 +19,10 @@ func LoginHandler(repo UserRepository, tokenConfig config.JWTConfig) gin.Handler
 			return
 		}
 
-		user, err := repo.FindUserByUsername(input.Username)
+		reqCtx, cancel := context.WithTimeout(ctx.Request.Context(), time.Second)
+		defer cancel()
+
+		user, err := repo.FindUserByUsername(reqCtx, input.Username)
 		if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)) != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return

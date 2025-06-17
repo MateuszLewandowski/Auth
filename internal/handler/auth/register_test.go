@@ -5,6 +5,7 @@ import (
 	"Auth/internal/handler/auth"
 	"Auth/internal/model"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -18,15 +19,15 @@ import (
 // mock implementation
 type mockUserRepo struct {
 	createFunc             func(user *model.User) error
-	findUserByUsernameFunc func(username string) (*model.User, error)
+	findUserByUsernameFunc func(ctx context.Context, username string) (*model.User, error)
 }
 
 func (m *mockUserRepo) Create(user *model.User) error {
 	return m.createFunc(user)
 }
 
-func (m *mockUserRepo) FindUserByUsername(username string) (*model.User, error) {
-	return m.findUserByUsernameFunc(username)
+func (m *mockUserRepo) FindUserByUsername(ctx context.Context, username string) (*model.User, error) {
+	return m.findUserByUsernameFunc(ctx, username)
 }
 
 func TestRegisterHandler_Success(t *testing.T) {

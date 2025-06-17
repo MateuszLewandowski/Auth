@@ -3,6 +3,7 @@ package pkg
 import (
 	"Auth/config"
 	"Auth/internal/model"
+	"context"
 	"fmt"
 	"log"
 
@@ -38,9 +39,9 @@ func (r *UserGormRepository) Create(user *model.User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *UserGormRepository) FindUserByUsername(username string) (*model.User, error) {
+func (r *UserGormRepository) FindUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	var user model.User
-	if err := r.db.Where("username = ?", username).First(&user).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("username = ?", username).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
