@@ -16,17 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockUserRepo struct {
-	createFunc func(user *model.User) error
-}
-
-func (m *mockUserRepo) Create(user *model.User) error {
-	if m.createFunc != nil {
-		return m.createFunc(user)
-	}
-	return nil
-}
-
 func TestRegisterHandler_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -40,8 +29,8 @@ func TestRegisterHandler_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 
-	repo := &mockUserRepo{
-		createFunc: func(user *model.User) error {
+	repo := &MockUserRepository{
+		CreateFunc: func(user *model.User) error {
 			return nil
 		},
 	}
@@ -68,7 +57,7 @@ func TestRegisterHandler_InvalidJSON(t *testing.T) {
 	resp := httptest.NewRecorder()
 
 	router := gin.Default()
-	router.POST("/register", auth.RegisterHandler(nil, config.JWTConfig{}, &MockCacheRepository{}))
+	router.POST("/register", auth.RegisterHandler(&MockUserRepository{}, config.JWTConfig{}, &MockCacheRepository{}))
 	router.ServeHTTP(resp, req)
 
 	assert.Equal(t, http.StatusBadRequest, resp.Code)
@@ -88,8 +77,8 @@ func TestRegisterHandler_UserAlreadyExists(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 
-	repo := &mockUserRepo{
-		createFunc: func(user *model.User) error {
+	repo := &MockUserRepository{
+		CreateFunc: func(user *model.User) error {
 			return errors.New("user already exists")
 		},
 	}
@@ -115,8 +104,8 @@ func TestRegisterHandler_CacheError(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 
-	repo := &mockUserRepo{
-		createFunc: func(user *model.User) error {
+	repo := &MockUserRepository{
+		CreateFunc: func(user *model.User) error {
 			return nil
 		},
 	}

@@ -10,5 +10,5 @@ type UserCreateRepository interface {
 }
 
 type UserFindByUsernameRepository interface {
-	FindUserByUsername(ctx context.Context, username string) (*model.User, error)
+	FindByUsername(ctx context.Context, username string) (*model.User, error)
 }

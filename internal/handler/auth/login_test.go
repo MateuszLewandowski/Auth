@@ -18,18 +18,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type MockUserRepository struct {
-	User  *model.User
-	Error error
-}
-
-func (m *MockUserRepository) FindUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	if m.Error != nil {
-		return nil, m.Error
-	}
-	return m.User, nil
-}
-
 func hashPassword(password string) string {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashed)
@@ -46,8 +34,8 @@ func TestLoginHandler_CacheHit(t *testing.T) {
 			return hashed, nil
 		},
 	}
-
 	repo := &MockUserRepository{}
+
 	tokenCfg := config.JWTConfig{
 		Secret:            "mysecret",
 		ExpirationMinutes: 15,
@@ -58,14 +46,14 @@ func TestLoginHandler_CacheHit(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
+	resp := httptest.NewRecorder()
 
 	r := gin.New()
 	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(resp, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "token")
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Contains(t, resp.Body.String(), "token")
 }
 
 func TestLoginHandler_CacheMissAndDBHit(t *testing.T) {
@@ -76,30 +64,38 @@ func TestLoginHandler_CacheMissAndDBHit(t *testing.T) {
 		GetFunc: func(key string) (string, error) {
 			return "", errors.New("not found")
 		},
-		SetFunc: func(key string, value interface{}, expiration time.Duration) error {
+		SetFunc: func(key string, value any, expiration time.Duration) error {
 			return nil
 		},
 	}
 
 	repo := &MockUserRepository{
-		User: &model.User{Username: "dbuser", Password: hashed},
+		FindByUsernameFunc: func(ctx context.Context, username string) (*model.User, error) {
+			return &model.User{
+				Username: "dbuser",
+				Password: hashed,
+			}, nil
+		},
 	}
 
-	tokenCfg := config.JWTConfig{Secret: "s3cr3t", ExpirationMinutes: 10}
+	tokenCfg := config.JWTConfig{
+		Secret:            "s3cr3t",
+		ExpirationMinutes: 10,
+	}
 
 	input := auth.AuthInput{Username: "dbuser", Password: password}
 	body, _ := json.Marshal(input)
 
 	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
+	resp := httptest.NewRecorder()
 
 	r := gin.New()
 	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(resp, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "token")
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Contains(t, resp.Body.String(), "token")
 }
 
 func TestLoginHandler_CacheWrongPassword(t *testing.T) {
@@ -109,22 +105,26 @@ func TestLoginHandler_CacheWrongPassword(t *testing.T) {
 		},
 	}
 
-	repo := &MockUserRepository{} // won't be used
-	tokenCfg := config.JWTConfig{Secret: "xxx", ExpirationMinutes: 1}
+	repo := &MockUserRepository{}
 
-	input := auth.AuthInput{Username: "x", Password: "wrong"}
+	tokenCfg := config.JWTConfig{
+		Secret:            "topsecret",
+		ExpirationMinutes: 5,
+	}
+
+	input := auth.AuthInput{Username: "user", Password: "wrong"}
 	body, _ := json.Marshal(input)
 
 	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
+	resp := httptest.NewRecorder()
 
 	r := gin.New()
 	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(resp, req)
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-	assert.Contains(t, w.Body.String(), "invalid credentials")
+	assert.Equal(t, http.StatusUnauthorized, resp.Code)
+	assert.Contains(t, resp.Body.String(), "invalid credentials")
 }
 
 func TestLoginHandler_InvalidJSON(t *testing.T) {
@@ -134,14 +134,14 @@ func TestLoginHandler_InvalidJSON(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader([]byte("not-json")))
 	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
+	resp := httptest.NewRecorder()
 
 	r := gin.New()
 	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(resp, req)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "corrupted input")
+	assert.Equal(t, http.StatusBadRequest, resp.Code)
+	assert.Contains(t, resp.Body.String(), "corrupted input")
 }
 
 func TestLoginHandler_UserNotFoundInCacheAndDB(t *testing.T) {
@@ -150,22 +150,26 @@ func TestLoginHandler_UserNotFoundInCacheAndDB(t *testing.T) {
 			return "", errors.New("not found")
 		},
 	}
+
 	repo := &MockUserRepository{
-		Error: errors.New("not found"),
+		FindByUsernameFunc: func(ctx context.Context, username string) (*model.User, error) {
+			return nil, errors.New("not found")
+		},
 	}
+
 	tokenCfg := config.JWTConfig{}
 
-	input := auth.AuthInput{Username: "none", Password: "any"}
+	input := auth.AuthInput{Username: "nonexistent", Password: "any"}
 	body, _ := json.Marshal(input)
 
 	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
+	resp := httptest.NewRecorder()
 
 	r := gin.New()
 	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(resp, req)
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-	assert.Contains(t, w.Body.String(), "invalid credentials")
+	assert.Equal(t, http.StatusUnauthorized, resp.Code)
+	assert.Contains(t, resp.Body.String(), "invalid credentials")
 }

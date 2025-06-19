@@ -35,7 +35,7 @@ func LoginHandler(
 			reqCtx, cancel := context.WithTimeout(ctx.Request.Context(), time.Second)
 			defer cancel()
 
-			user, err := repo.FindUserByUsername(reqCtx, input.Username)
+			user, err := repo.FindByUsername(reqCtx, input.Username)
 			if err != nil {
 				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 				return
