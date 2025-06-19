@@ -16,7 +16,7 @@ func StartServer(db *pkg.UserGormRepository, redis *pkg.RedisRepository, cfg *co
 	router := gin.Default()
 
 	router.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
-	router.POST("/login", auth.LoginHandler(db, cfg.JWT))
+	router.POST("/login", auth.LoginHandler(db, cfg.JWT, redis))
 	router.POST("/register", auth.RegisterHandler(db, cfg.JWT, redis))
 	router.GET("/auth", auth.AuthHandler(cfg.JWT.Secret)) // traefik sends get req
 

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -22,9 +23,8 @@ type MockUserRepository struct {
 	Error error
 }
 
-// Create implements auth.UserRepository.
 func (m *MockUserRepository) Create(user *model.User) error {
-	panic("unimplemented")
+	panic("not used in login tests")
 }
 
 func (m *MockUserRepository) FindUserByUsername(ctx context.Context, username string) (*model.User, error) {
@@ -34,127 +34,169 @@ func (m *MockUserRepository) FindUserByUsername(ctx context.Context, username st
 	return m.User, nil
 }
 
+type MockCacheRepository struct {
+	GetFunc    func(key string) (string, error)
+	SetFunc    func(key string, value interface{}, expiration time.Duration) error
+	DeleteFunc func(key string) error
+}
+
+func (m *MockCacheRepository) Get(key string) (string, error) {
+	if m.GetFunc != nil {
+		return m.GetFunc(key)
+	}
+	return "", errors.New("not implemented")
+}
+
+func (m *MockCacheRepository) Delete(key string) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(key)
+	}
+	return errors.New("not implemented")
+}
+
+func (m *MockCacheRepository) Set(key string, value interface{}, expiration time.Duration) error {
+	if m.SetFunc != nil {
+		return m.SetFunc(key, value, expiration)
+	}
+	return nil
+}
+
 func hashPassword(password string) string {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashed)
 }
 
-func TestLoginHandler_Success(t *testing.T) {
+func TestLoginHandler_CacheHit(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	password := "secret123"
-	username := "testuser"
-	user := &model.User{
-		Username: username,
-		Password: hashPassword(password),
+	password := "test123"
+	hashed := hashPassword(password)
+
+	cache := &MockCacheRepository{
+		GetFunc: func(key string) (string, error) {
+			return hashed, nil
+		},
 	}
 
-	repo := &MockUserRepository{User: user}
-	tokenConfig := config.JWTConfig{
-		Secret:            "testsecret",
-		ExpirationMinutes: 60,
+	repo := &MockUserRepository{}
+	tokenCfg := config.JWTConfig{
+		Secret:            "mysecret",
+		ExpirationMinutes: 15,
 	}
 
-	input := auth.AuthInput{
-		Username: username,
-		Password: password,
-	}
+	input := auth.AuthInput{Username: "cacheduser", Password: password}
 	body, _ := json.Marshal(input)
 
-	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	responseRecorder := httptest.NewRecorder()
+	w := httptest.NewRecorder()
 
 	r := gin.New()
-	r.POST("/login", auth.LoginHandler(repo, tokenConfig))
+	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
+	r.ServeHTTP(w, req)
 
-	r.ServeHTTP(responseRecorder, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "token")
+}
 
-	if responseRecorder.Code != http.StatusOK {
-		t.Fatalf("unexpected http response %d", responseRecorder.Code)
+func TestLoginHandler_CacheMissAndDBHit(t *testing.T) {
+	password := "testpass"
+	hashed := hashPassword(password)
+
+	cache := &MockCacheRepository{
+		GetFunc: func(key string) (string, error) {
+			return "", errors.New("not found")
+		},
+		SetFunc: func(key string, value interface{}, expiration time.Duration) error {
+			return nil
+		},
 	}
 
-	var resp map[string]string
-	err := json.Unmarshal(responseRecorder.Body.Bytes(), &resp)
-	if err != nil {
-		t.Fatalf("corrupted json payload %v", err)
+	repo := &MockUserRepository{
+		User: &model.User{Username: "dbuser", Password: hashed},
 	}
 
-	token, ok := resp["token"]
+	tokenCfg := config.JWTConfig{Secret: "s3cr3t", ExpirationMinutes: 10}
 
-	assert.True(t, ok)
-	assert.NotEmpty(t, token, "token should not be empty")
+	input := auth.AuthInput{Username: "dbuser", Password: password}
+	body, _ := json.Marshal(input)
+
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	r := gin.New()
+	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "token")
+}
+
+func TestLoginHandler_CacheWrongPassword(t *testing.T) {
+	cache := &MockCacheRepository{
+		GetFunc: func(key string) (string, error) {
+			return hashPassword("correctpassword"), nil
+		},
+	}
+
+	repo := &MockUserRepository{} // won't be used
+	tokenCfg := config.JWTConfig{Secret: "xxx", ExpirationMinutes: 1}
+
+	input := auth.AuthInput{Username: "x", Password: "wrong"}
+	body, _ := json.Marshal(input)
+
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	r := gin.New()
+	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Contains(t, w.Body.String(), "invalid credentials")
 }
 
 func TestLoginHandler_InvalidJSON(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
+	cache := &MockCacheRepository{}
 	repo := &MockUserRepository{}
-	tokenConfig := config.JWTConfig{}
+	tokenCfg := config.JWTConfig{}
 
-	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBufferString("invalid json"))
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader([]byte("not-json")))
 	req.Header.Set("Content-Type", "application/json")
-	responseRecorder := httptest.NewRecorder()
+	w := httptest.NewRecorder()
 
 	r := gin.New()
-	r.POST("/login", auth.LoginHandler(repo, tokenConfig))
+	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
+	r.ServeHTTP(w, req)
 
-	r.ServeHTTP(responseRecorder, req)
-
-	assert.Equal(t, `{"error":"corrupted input payload"}`, responseRecorder.Body.String())
-	assert.Equal(t, http.StatusBadRequest, responseRecorder.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "corrupted input")
 }
 
-func TestLoginHandler_UserNotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	repo := &MockUserRepository{Error: errors.New("user not found")}
-	tokenConfig := config.JWTConfig{}
-
-	input := auth.AuthInput{
-		Username: "unknown",
-		Password: "pass",
+func TestLoginHandler_UserNotFoundInCacheAndDB(t *testing.T) {
+	cache := &MockCacheRepository{
+		GetFunc: func(key string) (string, error) {
+			return "", errors.New("not found")
+		},
 	}
+	repo := &MockUserRepository{
+		Error: errors.New("not found"),
+	}
+	tokenCfg := config.JWTConfig{}
+
+	input := auth.AuthInput{Username: "none", Password: "any"}
 	body, _ := json.Marshal(input)
 
-	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	responseRecorder := httptest.NewRecorder()
+	w := httptest.NewRecorder()
 
 	r := gin.New()
-	r.POST("/login", auth.LoginHandler(repo, tokenConfig))
+	r.POST("/login", auth.LoginHandler(repo, tokenCfg, cache))
+	r.ServeHTTP(w, req)
 
-	r.ServeHTTP(responseRecorder, req)
-
-	assert.Equal(t, `{"error":"invalid credentials"}`, responseRecorder.Body.String())
-	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
-}
-
-func TestLoginHandler_WrongPassword(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	user := &model.User{
-		Username: "testuser",
-		Password: hashPassword("correctpassword"),
-	}
-	repo := &MockUserRepository{User: user}
-	tokenConfig := config.JWTConfig{}
-
-	input := auth.AuthInput{
-		Username: "testuser",
-		Password: "wrongpassword",
-	}
-	body, _ := json.Marshal(input)
-
-	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	responseRecorder := httptest.NewRecorder()
-
-	r := gin.New()
-	r.POST("/login", auth.LoginHandler(repo, tokenConfig))
-
-	r.ServeHTTP(responseRecorder, req)
-
-	assert.Equal(t, `{"error":"invalid credentials"}`, responseRecorder.Body.String())
-	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Contains(t, w.Body.String(), "invalid credentials")
 }
