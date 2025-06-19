@@ -27,33 +27,6 @@ func (m *mockUserRepo) Create(user *model.User) error {
 	return nil
 }
 
-type mockCache struct {
-	setFunc    func(key string, value any, expiration time.Duration) error
-	getFunc    func(key string) (string, error)
-	deleteFunc func(key string) error
-}
-
-func (m *mockCache) Set(key string, value any, expiration time.Duration) error {
-	if m.setFunc != nil {
-		return m.setFunc(key, value, expiration)
-	}
-	return nil
-}
-
-func (m *mockCache) Get(key string) (string, error) {
-	if m.getFunc != nil {
-		return m.getFunc(key)
-	}
-	return "", nil
-}
-
-func (m *mockCache) Delete(key string) error {
-	if m.deleteFunc != nil {
-		return m.deleteFunc(key)
-	}
-	return nil
-}
-
 func TestRegisterHandler_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -73,8 +46,8 @@ func TestRegisterHandler_Success(t *testing.T) {
 		},
 	}
 
-	cache := &mockCache{
-		setFunc: func(key string, value any, expiration time.Duration) error {
+	cache := &MockCacheRepository{
+		SetFunc: func(key string, value any, expiration time.Duration) error {
 			return nil
 		},
 	}
@@ -95,7 +68,7 @@ func TestRegisterHandler_InvalidJSON(t *testing.T) {
 	resp := httptest.NewRecorder()
 
 	router := gin.Default()
-	router.POST("/register", auth.RegisterHandler(nil, config.JWTConfig{}, &mockCache{}))
+	router.POST("/register", auth.RegisterHandler(nil, config.JWTConfig{}, &MockCacheRepository{}))
 	router.ServeHTTP(resp, req)
 
 	assert.Equal(t, http.StatusBadRequest, resp.Code)
@@ -122,7 +95,7 @@ func TestRegisterHandler_UserAlreadyExists(t *testing.T) {
 	}
 
 	router := gin.Default()
-	router.POST("/register", auth.RegisterHandler(repo, config.JWTConfig{}, &mockCache{}))
+	router.POST("/register", auth.RegisterHandler(repo, config.JWTConfig{}, &MockCacheRepository{}))
 	router.ServeHTTP(resp, req)
 
 	assert.Equal(t, http.StatusConflict, resp.Code)
@@ -148,8 +121,8 @@ func TestRegisterHandler_CacheError(t *testing.T) {
 		},
 	}
 
-	cache := &mockCache{
-		setFunc: func(key string, value any, expiration time.Duration) error {
+	cache := &MockCacheRepository{
+		SetFunc: func(key string, value any, expiration time.Duration) error {
 			return errors.New("redis error")
 		},
 	}
