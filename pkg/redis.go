@@ -33,14 +33,14 @@ func InitializeRedis(cfg *config.Config) *RedisRepository {
 	return &RedisRepository{client: RedisClient}
 }
 
-func Set(key string, value any, expiration time.Duration) error {
-	return RedisClient.Set(ctx, key, value, expiration).Err()
+func (r *RedisRepository) Set(key string, value any, expiration time.Duration) error {
+	return r.client.Set(ctx, key, value, expiration).Err()
 }
 
-func Get(key string) (string, error) {
-	return RedisClient.Get(ctx, key).Result()
+func (r *RedisRepository) Get(key string) (string, error) {
+	return r.client.Get(ctx, key).Result()
 }
 
-func Delete(key string) error {
-	return RedisClient.Del(ctx, key).Err()
+func (r *RedisRepository) Delete(key string) error {
+	return r.client.Del(ctx, key).Err()
 }

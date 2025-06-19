@@ -16,7 +16,6 @@ func (User) TableName() string {
 	return "users"
 }
 
-
 func (u *User) SetPassword() error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {

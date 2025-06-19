@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites tests="14" failures="0" errors="0" time="1.813097">
-	<testsuite tests="0" failures="0" time="0.000000" name="Auth/cmd" timestamp="2025-06-17T12:15:09+02:00">
+<testsuites tests="15" failures="0" errors="0" time="1.877752">
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/cmd" timestamp="2025-06-19T09:59:01+02:00">
 		<properties>
 			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
 		</properties>
 	</testsuite>
-	<testsuite tests="0" failures="0" time="0.000000" name="Auth/config" timestamp="2025-06-17T12:15:09+02:00">
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/config" timestamp="2025-06-19T09:59:01+02:00">
 		<properties>
 			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
 		</properties>
 	</testsuite>
-	<testsuite tests="0" failures="0" time="0.000000" name="Auth/helper" timestamp="2025-06-17T12:15:09+02:00">
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/helper" timestamp="2025-06-19T09:59:01+02:00">
 		<properties>
 			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
 		</properties>
 	</testsuite>
-	<testsuite tests="14" failures="0" time="0.832000" name="Auth/internal/handler/auth" timestamp="2025-06-17T12:15:10+02:00">
+	<testsuite tests="15" failures="0" time="0.881000" name="Auth/internal/handler/auth" timestamp="2025-06-19T09:59:02+02:00">
 		<properties>
 			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
 		</properties>
@@ -26,25 +26,26 @@
 		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_NotBeforeInFuture" time="0.000000"></testcase>
 		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_MissingUsernameClaim" time="0.000000"></testcase>
 		<testcase classname="Auth/internal/handler/auth" name="TestAuthHandler_ValidToken" time="0.000000"></testcase>
-		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_Success" time="0.140000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_Success" time="0.130000"></testcase>
 		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_InvalidJSON" time="0.000000"></testcase>
 		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_UserNotFound" time="0.000000"></testcase>
 		<testcase classname="Auth/internal/handler/auth" name="TestLoginHandler_WrongPassword" time="0.130000"></testcase>
 		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_Success" time="0.060000"></testcase>
 		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_InvalidJSON" time="0.000000"></testcase>
-		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_RepoUserExistsError" time="0.060000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_UserAlreadyExists" time="0.060000"></testcase>
+		<testcase classname="Auth/internal/handler/auth" name="TestRegisterHandler_CacheError" time="0.060000"></testcase>
 	</testsuite>
-	<testsuite tests="0" failures="0" time="0.000000" name="Auth/internal/model" timestamp="2025-06-17T12:15:10+02:00">
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/internal/model" timestamp="2025-06-19T09:59:02+02:00">
 		<properties>
 			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
 		</properties>
 	</testsuite>
-	<testsuite tests="0" failures="0" time="0.000000" name="Auth/internal/server" timestamp="2025-06-17T12:15:10+02:00">
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/internal/server" timestamp="2025-06-19T09:59:02+02:00">
 		<properties>
 			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
 		</properties>
 	</testsuite>
-	<testsuite tests="0" failures="0" time="0.000000" name="Auth/pkg" timestamp="2025-06-17T12:15:10+02:00">
+	<testsuite tests="0" failures="0" time="0.000000" name="Auth/pkg" timestamp="2025-06-19T09:59:02+02:00">
 		<properties>
 			<property name="go.version" value="go1.24.4 darwin/arm64"></property>
 		</properties>
