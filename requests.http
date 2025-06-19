@@ -17,7 +17,7 @@ Content-Type: application/json
 }
 
 ### JWT
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAzMTQ4NDIsInVzZXJuYW1lIjoidXNlcm5hbWUifQ.WtaBHhnNCnIceuousRH2MjlIZSP3TmbbpZRJoF8qOnM
+@token = jwt here
 
 ### Protected
 GET http://myapp.local/protected
