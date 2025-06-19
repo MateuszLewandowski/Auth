@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterHandler(repo UserRepository, tokenConfig config.JWTConfig, cache Cache) gin.HandlerFunc {
+func RegisterHandler(repo UserCreateRepository, tokenConfig config.JWTConfig, cache Cache) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var input AuthInput
 		if err := ctx.ShouldBindJSON(&input); err != nil {

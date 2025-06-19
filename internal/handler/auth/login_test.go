@@ -23,10 +23,6 @@ type MockUserRepository struct {
 	Error error
 }
 
-func (m *MockUserRepository) Create(user *model.User) error {
-	panic("not used in login tests")
-}
-
 func (m *MockUserRepository) FindUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	if m.Error != nil {
 		return nil, m.Error

@@ -5,7 +5,6 @@ import (
 	"Auth/internal/handler/auth"
 	"Auth/internal/model"
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -18,8 +17,7 @@ import (
 )
 
 type mockUserRepo struct {
-	createFunc             func(user *model.User) error
-	findUserByUsernameFunc func(ctx context.Context, username string) (*model.User, error)
+	createFunc func(user *model.User) error
 }
 
 func (m *mockUserRepo) Create(user *model.User) error {
@@ -27,13 +25,6 @@ func (m *mockUserRepo) Create(user *model.User) error {
 		return m.createFunc(user)
 	}
 	return nil
-}
-
-func (m *mockUserRepo) FindUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	if m.findUserByUsernameFunc != nil {
-		return m.findUserByUsernameFunc(ctx, username)
-	}
-	return nil, nil
 }
 
 type mockCache struct {

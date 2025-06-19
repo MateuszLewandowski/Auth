@@ -5,7 +5,10 @@ import (
 	"context"
 )
 
-type UserRepository interface {
+type UserCreateRepository interface {
 	Create(user *model.User) error
+}
+
+type UserFindByUsernameRepository interface {
 	FindUserByUsername(ctx context.Context, username string) (*model.User, error)
 }
