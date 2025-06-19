@@ -1,0 +1,34 @@
+### Register
+POST http://auth.local/register
+Content-Type: application/json
+
+{
+  "username": "username",
+  "password": "password"
+}
+
+### Login
+POST http://auth.local/login
+Content-Type: application/json
+
+{
+  "username": "username",
+  "password": "password"
+}
+
+### JWT
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAzMTQ4NDIsInVzZXJuYW1lIjoidXNlcm5hbWUifQ.WtaBHhnNCnIceuousRH2MjlIZSP3TmbbpZRJoF8qOnM
+
+### Protected
+GET http://myapp.local/protected
+Authorization: Bearer {{token}}
+
+### Public
+GET http://myapp.local/public
+
+### Auth
+POST http://auth.local/auth
+Authorization: Bearer {{token}}
+
+### Health
+GET http://auth.local/health

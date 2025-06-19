@@ -2,6 +2,9 @@ LOAD_LOCAL_ENV = set -a; source .env.local; set +a;
 LOAD_DEV_ENV = set -a; source .env.dev; set +a;
 LOAD_PROD_ENV = set -a; source .env.prod; set +a;
 
+run-dev-traefik:
+	$(LOAD_LOCAL_ENV) docker compose -f docker-compose.traefik.dev.yml up -d --build
+
 run-local:
 	$(LOAD_LOCAL_ENV) docker compose -f docker-compose.local.yml up -d 
 
