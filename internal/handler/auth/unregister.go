@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"Auth/config"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,6 +13,7 @@ import (
 func UnregisterHandler(
 	repo UserDeleteRepository,
 	cache Cache,
+	tokenConfig config.JWTConfig,
 ) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		username, exists := ctx.Get("username")
@@ -35,6 +39,12 @@ func UnregisterHandler(
 			ctx.JSON(http.StatusUnprocessableEntity, gin.H{"error": "user not found"})
 			return
 		}
+
+		authHeader := ctx.GetHeader("Authorization")
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		blacklistKey := fmt.Sprintf("jwt_blacklist:%s", tokenString)
+		expiration := time.Duration(tokenConfig.ExpirationMinutes) * time.Minute
+		_ = cache.Set(blacklistKey, "invalid", expiration)
 
 		ctx.JSON(http.StatusOK, gin.H{"message": "user deleted"})
 	}

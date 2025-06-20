@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func AuthHandler(secret string) gin.HandlerFunc {
+func AuthHandler(secret string, cache Cache) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		tokenString := ctx.GetHeader("Authorization")
 		if tokenString == "" {
@@ -37,6 +37,14 @@ func AuthHandler(secret string) gin.HandlerFunc {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
+		}
+
+		blacklistKey := fmt.Sprintf("jwt_blacklist:%s", tokenString)
+		if cache != nil {
+			if val, err := Cache.Get(cache, blacklistKey); err == nil && val != "" {
+				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token is blacklisted"})
+				return
+			}
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)

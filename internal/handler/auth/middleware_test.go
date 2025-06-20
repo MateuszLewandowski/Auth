@@ -1,6 +1,7 @@
-package auth
+package auth_test
 
 import (
+	"Auth/internal/handler/auth"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -41,13 +42,13 @@ func performRequest(_ *testing.T, handler gin.HandlerFunc, token string) *httpte
 }
 
 func TestAuthHandler_MissingAuthorizationHeader(t *testing.T) {
-	responseRecorder := performRequest(t, AuthHandler(testSecret), "")
+	responseRecorder := performRequest(t, auth.AuthHandler(testSecret, &MockCacheRepository{}), "")
 	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
 	assert.Contains(t, responseRecorder.Body.String(), "authorization header required")
 }
 
 func TestAuthHandler_InvalidTokenFormat(t *testing.T) {
-	responseRecorder := performRequest(t, AuthHandler(testSecret), "Token abc.def.ghi")
+	responseRecorder := performRequest(t, auth.AuthHandler(testSecret, &MockCacheRepository{}), "Token abc.def.ghi")
 	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
 	assert.Contains(t, responseRecorder.Body.String(), "invalid token format")
 }
@@ -58,7 +59,7 @@ func TestAuthHandler_InvalidSignature(t *testing.T) {
 		"exp":      time.Now().Add(5 * time.Minute).Unix(),
 	}
 	token := generateToken(t, claims, "wrong-secret")
-	responseRecorder := performRequest(t, AuthHandler(testSecret), "Bearer "+token)
+	responseRecorder := performRequest(t, auth.AuthHandler(testSecret, &MockCacheRepository{}), "Bearer "+token)
 	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
 	assert.Contains(t, responseRecorder.Body.String(), "signature is invalid")
 }
@@ -69,7 +70,7 @@ func TestAuthHandler_ExpiredToken(t *testing.T) {
 		"exp":      time.Now().Add(-5 * time.Minute).Unix(),
 	}
 	token := generateToken(t, claims, testSecret)
-	responseRecorder := performRequest(t, AuthHandler(testSecret), "Bearer "+token)
+	responseRecorder := performRequest(t, auth.AuthHandler(testSecret, &MockCacheRepository{}), "Bearer "+token)
 	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
 	assert.Contains(t, responseRecorder.Body.String(), "token is expired")
 }
@@ -81,7 +82,7 @@ func TestAuthHandler_NotBeforeInFuture(t *testing.T) {
 		"exp":      time.Now().Add(20 * time.Minute).Unix(),
 	}
 	token := generateToken(t, claims, testSecret)
-	responseRecorder := performRequest(t, AuthHandler(testSecret), "Bearer "+token)
+	responseRecorder := performRequest(t, auth.AuthHandler(testSecret, &MockCacheRepository{}), "Bearer "+token)
 	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
 	assert.Contains(t, responseRecorder.Body.String(), "token has invalid claims: token is not valid yet")
 }
@@ -91,7 +92,7 @@ func TestAuthHandler_MissingUsernameClaim(t *testing.T) {
 		"exp": time.Now().Add(5 * time.Minute).Unix(),
 	}
 	token := generateToken(t, claims, testSecret)
-	responseRecorder := performRequest(t, AuthHandler(testSecret), "Bearer "+token)
+	responseRecorder := performRequest(t, auth.AuthHandler(testSecret, &MockCacheRepository{}), "Bearer "+token)
 	assert.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
 	assert.Contains(t, responseRecorder.Body.String(), "username claim required")
 }
@@ -103,7 +104,7 @@ func TestAuthHandler_ValidToken(t *testing.T) {
 		"nbf":      time.Now().Add(-5 * time.Minute).Unix(),
 	}
 	token := generateToken(t, claims, testSecret)
-	responseRecorder := performRequest(t, AuthHandler(testSecret), "Bearer "+token)
+	responseRecorder := performRequest(t, auth.AuthHandler(testSecret, &MockCacheRepository{}), "Bearer "+token)
 	assert.Equal(t, http.StatusOK, responseRecorder.Code)
 	assert.Contains(t, responseRecorder.Body.String(), "authorized")
 }
