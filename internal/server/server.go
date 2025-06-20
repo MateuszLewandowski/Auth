@@ -19,6 +19,7 @@ func StartServer(db *pkg.UserGormRepository, redis *pkg.RedisRepository, cfg *co
 	router.POST("/login", auth.LoginHandler(db, cfg.JWT, redis))
 	router.POST("/register", auth.RegisterHandler(db, cfg.JWT, redis))
 	router.GET("/auth", auth.AuthHandler(cfg.JWT.Secret)) // traefik sends get req
+	router.DELETE("/unregister", auth.AuthHandler(cfg.JWT.Secret), auth.UnregisterHandler(db, redis))
 
 	return router
 }

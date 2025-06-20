@@ -9,6 +9,7 @@ import (
 type MockUserRepository struct {
 	CreateFunc         func(user *model.User) error
 	FindByUsernameFunc func(ctx context.Context, username string) (*model.User, error)
+	DeleteFunc         func(username string) error
 	User               *model.User
 }
 
@@ -27,4 +28,11 @@ func (m *MockUserRepository) FindByUsername(ctx context.Context, username string
 		return m.User, nil
 	}
 	return nil, errors.New("not found")
+}
+
+func (m *MockUserRepository) Delete(username string) error {
+	if m.DeleteFunc != nil {
+		return m.DeleteFunc(username)
+	}
+	return nil
 }

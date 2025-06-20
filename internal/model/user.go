@@ -7,9 +7,8 @@ import (
 
 type User struct {
 	gorm.Model
-	Username     string `json:"username" gorm:"unique;not null"`
-	Password     string `json:"password" gorm:"not null"`
-	EmailAddress string `json:"email_address" gorm:"unique;not null"`
+	Username string `json:"username" gorm:"unique;not null"`
+	Password string `json:"password" gorm:"not null"`
 }
 
 func (User) TableName() string {

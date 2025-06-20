@@ -26,6 +26,10 @@ Authorization: Bearer {{token}}
 ### Public
 GET http://myapp.local/public
 
+### Unregister
+DELETE http://auth.local/unregister
+Authorization: Bearer {{token}}
+
 ### Auth
 POST http://auth.local/auth
 Authorization: Bearer {{token}}

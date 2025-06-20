@@ -30,6 +30,10 @@ services:
       # shared service
       - "traefik.http.services.auth-service.loadbalancer.server.port=8081"
 
+      # protected
+      - "traefik.http.routers.app-unregister.rule=Host(`auth.local`) && Path(`/unregister`)"
+      - "traefik.http.routers.app-unregister.service=auth-service"
+      - "traefik.http.routers.app-unregister.middlewares=auth"
   db:
     image: postgres:16
     environment:
@@ -81,7 +85,6 @@ services:
     - "traefik.http.middlewares.auth.forwardauth.address=http://app-dev:8081/auth"
     - "traefik.http.middlewares.auth.forwardauth.trustForwardHeader=true"
     - "traefik.http.middlewares.auth.forwardauth.authRequestHeaders=Authorization"
-    - "traefik.http.middlewares.auth.forwardauth.authResponseHeaders=X-User"
     # https://doc.traefik.io/traefik/reference/routing-configuration/http/load-balancing/service/
     - "traefik.http.services.frontend-service.loadbalancer.server.port=8080"
 

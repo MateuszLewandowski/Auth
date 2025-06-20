@@ -12,3 +12,7 @@ type UserCreateRepository interface {
 type UserFindByUsernameRepository interface {
 	FindByUsername(ctx context.Context, username string) (*model.User, error)
 }
+
+type UserDeleteRepository interface {
+	Delete(username string) error
+}

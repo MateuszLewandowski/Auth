@@ -46,3 +46,14 @@ func (r *UserGormRepository) FindByUsername(ctx context.Context, username string
 	}
 	return &user, nil
 }
+
+func (r *UserGormRepository) Delete(username string) error {
+	result := r.db.Where("username = ?", username).Unscoped().Delete(&model.User{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
